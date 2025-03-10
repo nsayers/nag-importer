@@ -1,0 +1,48 @@
+#!/usr/bin/perl -w
+
+use strict;
+use File::stat;
+
+my %ERRORS = (
+        'OK' => 0,
+        'WARNING' => 1,
+        'CRITICAL' => 2,
+        'UNKNOWN' => 3,
+        'DEPENDENT' => 4
+);
+
+my ($name) = getpwuid($<);
+if (($name eq "nagios") or ($name eq "root")){
+} else {
+    print "WARNING: nrpe isnt running as nagios or root\n";
+    exit $ERRORS{'WARNING'}; 
+}
+my $nagiosuid = getpwnam("nagios");
+my $touchfile = "check_for_disk_writeability";
+
+my $partition = "/";
+
+
+my $test_file = $partition.$touchfile;
+
+my $result = system '/bin/touch', $test_file;
+if ($> == 0) {
+    system "/bin/chown nagios:nagios $test_file";
+}
+
+# little late for this don't you think?
+#if ($> == 0) {
+#    system "/bin/chown nagios.nagios $test_file";
+#    system "/bin/chown nagios.nagios $test_file2";
+#}
+
+if (($result)){
+    print "CRITICAL: ";
+    if ($result) { print $partition." "; }
+        print "is/are read-only.  Unmount, fsck, and remount\n";
+    exit $ERRORS{'CRITICAL'}; 
+} else {
+#    print "OK: $partition $partition2 are writeable.\n";
+    print "OK: $partition is writeable.\n";
+    exit $ERRORS{'OK'};
+} 

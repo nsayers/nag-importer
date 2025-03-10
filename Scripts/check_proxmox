@@ -1,0 +1,16 @@
+#!/usr/bin/perl -w
+
+#use strict;
+
+my $vmid = $ARGV[0];
+
+if(!defined($vmid)) {
+	print "vmid not specified\n";
+	exit 3;
+}
+
+my $data = system("pvesh get /cluster/resources --type vm --output-format yaml | egrep -i 'vmid|status|node' | paste - - - -d, | grep '$vmid'");
+
+my $vid = $data->{vmid};
+
+print "$vid\n";

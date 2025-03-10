@@ -1,0 +1,99 @@
+### Needed SYSTEM METRICS ###
+command[check_disk]=/usr/lib64/nagios/plugins/check_disk -w $ARG1$ -c $ARG2$ -p $ARG3$
+command[check_load]=/usr/lib64/nagios/plugins/check_load -r -w $ARG1$ -c $ARG2$
+command[check_proc]=/usr/lib64/nagios/plugins/check_procs -w $ARG1$ -c $ARG2$
+command[check_procs]=/usr/lib64/nagios/plugins/check_procs -w $ARG1$ -c $ARG2$ -a $ARG3$
+command[check_procz]=/usr/lib64/nagios/plugins/check_procs -w $ARG1$ -c $ARG2$ -s $ARG3$
+command[check_uptime]=/usr/lib64/nagios/plugins/check_uptime $ARG1$
+command[check_users]=/usr/lib64/nagios/plugins/check_users -w $ARG1$ -c $ARG2$
+command[check_raid]=/usr/bin/sudo /usr/lib/nagios/plugins/check_megaraid
+
+
+
+
+PFSense
+### Needed SYSTEM METRICS ###
+command[check_disk]=/usr/local/libexec/nagios/check_disk -w $ARG1$ -c $ARG2$ -p $ARG3$
+command[check_load]=/usr/local/libexec/nagios/check_load -r -w $ARG1$ -c $ARG2$
+command[check_proc]=/usr/local/libexec/nagios/check_procs -w $ARG1$ -c $ARG2$
+command[check_procs]=/usr/local/libexec/nagios/check_procs -w $ARG1$ -c $ARG2$ -a $ARG3$
+command[check_procz]=/usr/local/libexec/nagios/check_procs -w $ARG1$ -c $ARG2$ -s $ARG3$
+command[check_uptime]=/usr/local/libexec/nagios/check_uptime $ARG1$
+command[check_users]=/usr/local/libexec/nagios/check_users -w $ARG1$ -c $ARG2$
+
+
+
+### Needed SYSTEM METRICS ###
+command[check_disk]=/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -p /
+command[check_load]=/usr/lib/nagios/plugins/check_load -r -w 3,2,1 -c 6,4,2
+command[check_proc]=/usr/lib/nagios/plugins/check_procs -w 150 -c 300
+command[check_procs]=/usr/lib/nagios/plugins/check_procs -w $ARG1$ -c $ARG2$ -a $ARG3$
+command[check_procz]=/usr/lib/nagios/plugins/check_procs -w 1 -c 2 -s Z
+command[check_uptime]=/usr/lib/nagios/plugins/check_uptime 90
+command[check_users]=/usr/lib/nagios/plugins/check_users -w 1 -c 2
+
+Hardware monitoring may need nagios-plugins-openmanage
+
+
+
+
+/etc/sudoers
+
+
+Defaults:nagios !requiretty
+nagios ALL=NOPASSWD: /usr/lib64/nagios/plugins/check_megaraid
+
+
+###############################################################################
+#
+# Custom Service
+#
+
+define service{
+        use                                             generic-service
+        host_name                                       mediacenter.sayersfamily.com
+        service_description                             ChassisTag
+        check_command                                   check_snmp_remote!10.0.69.235!2c!SayFam!SNMPv2-SMI::enterprises.674.10892.2.1.1.11.0
+        notes											http://10.0.69.235/ root / (standard root)
+        }
+
+define service{
+        use                                             generic-service
+        host_name                                       mediacenter.sayersfamily.com
+        service_description                             DRAC-PING
+        check_command                                   check_ping_remote!10.0.69.235!100,20%!100,60%!-4
+        notes											http://10.0.69.235/ root / (standard root)
+        }
+
+define service{
+        use                                             generic-service
+        host_name                                       mediacenter.sayersfamily.com
+        service_description                             DRAC-HTTP
+        check_command                                   check_http!https://10.0.69.235/login.html
+        notes											http://10.0.69.235/ root / (standard root)
+        }
+
+
+
+###############################################################################
+#
+# Custom Service Dependencies
+#
+
+define servicedependency{
+        host_name                                       mediacenter.sayersfamily.com
+        service_description                             ChassisTag
+        dependent_host_name                             mediacenter.sayersfamily.com
+        dependent_service_description                   DRAC-PING
+        execution_failure_criteria                      n
+        notification_failure_criteria                   u,c
+}
+
+define servicedependency{
+        host_name                                       mediacenter.sayersfamily.com
+        service_description                             DRAC-HTTP
+        dependent_host_name                             mediacenter.sayersfamily.com
+        dependent_service_description                   DRAC-PING
+        execution_failure_criteria                      n
+        notification_failure_criteria                   u,c
+}
